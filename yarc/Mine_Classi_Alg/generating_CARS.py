@@ -3,6 +3,7 @@ import fim
 from ..Structure import Consequent, Item, Antecedent, ClassAssocationRule
 import logging
 
+
 def generateCARs(transactionDB, support=1, confidence=50, maxlen=10, **kwargs):
     """Function for generating ClassAssociationRules from a TransactionDB
     THIS IS THE PORTION WHICH USES APRIORI FROM PYFIM
@@ -33,12 +34,11 @@ def generateCARs(transactionDB, support=1, confidence=50, maxlen=10, **kwargs):
 
     """
     appear = transactionDB.appeardict
-    
-    rules = fim.apriori(transactionDB.string_representation, supp=support, conf=confidence, mode="o", target="r", report="sc", appear=appear, **kwargs, zmax=maxlen)
-    
+
+    rules = fim.apriori(transactionDB.string_representation, supp=support, conf=confidence,
+                        mode="o", target="r", report="sc", appear=appear, **kwargs, zmax=maxlen)
 
     return CARlist(rules)
-
 
 
 def CARlist(rules):
@@ -55,7 +55,7 @@ def CARlist(rules):
 
     """
     CARs = []
-    
+
     for rule in rules:
         con_tmp, ant_tmp, support, confidence = rule
 
@@ -63,19 +63,17 @@ def CARlist(rules):
 
         # so that the order of items in antecedent is always the same
         ant_tmp = sorted(list(ant_tmp))
-        ant_items = [ Item(*i.split(":=:")) for i in ant_tmp ]
+        ant_items = [Item(*i.split(":=:")) for i in ant_tmp]
         ant = Antecedent(ant_items)
 
-        CAR = ClassAssocationRule(ant, con, support=support, confidence=confidence)
+        CAR = ClassAssocationRule(
+            ant, con, support=support, confidence=confidence)
         CARs.append(CAR)
 
     CARs.sort(reverse=True)
 
     return CARs
 
-
-
- 
 
 def top_rules(transactions,
               appearance={},
@@ -128,75 +126,74 @@ def top_rules(transactions,
     list of mined rules. The rules are not ordered.
 
     """
-    
+
     starttime = time.time()
-    
+
     MAX_RULE_LEN = len(transactions[0])
-    
+
     support = init_support
     conf = init_conf
-    
+
     maxlen = init_maxlen
-    
+
     flag = True
     lastrulecount = -1
     maxlendecreased_due_timeout = False
     iterations = 0
-    
+
     rules = None
 
     while flag:
         iterations += 1
-            
+
         if iterations == max_iterations:
             logging.debug("Max iterations reached")
             break
 
         logging.debug("Running apriori with setting: confidence={}, support={}, minlen={}, maxlen={}, MAX_RULE_LEN={}".format(
-                conf, support, minlen, maxlen, MAX_RULE_LEN))
-        
-        rules_current = fim.arules(transactions, supp=support, conf=conf, mode="o", report="sc", appear=appearance, zmax=maxlen, zmin=minlen)
-        
+            conf, support, minlen, maxlen, MAX_RULE_LEN))
+
+        rules_current = fim.arules(transactions, supp=support, conf=conf,
+                                   mode="o", report="sc", appear=appearance, zmax=maxlen, zmin=minlen)
+
         rules = rules_current
-        
+
         rule_count = len(rules)
-        
-        logging.debug("Rule count: {}, Iteration: {}".format(rule_count, iterations))
-        
+
+        logging.debug("Rule count: {}, Iteration: {}".format(
+            rule_count, iterations))
+
         if (rule_count >= target_rule_count):
             flag = False
             logging.debug(f"Target rule count satisfied: {target_rule_count}")
         else:
             exectime = time.time() - starttime
-            
+
             if exectime > total_timeout:
                 logging.debug(f"Execution time exceeded: {total_timeout}")
                 flag = False
-                
+
             elif maxlen < MAX_RULE_LEN and lastrulecount != rule_count and not maxlendecreased_due_timeout:
-                    maxlen += 1
-                    lastrulecount = rule_count
-                    logging.debug(f"Increasing maxlen {maxlen}")
-                        
+                maxlen += 1
+                lastrulecount = rule_count
+                logging.debug(f"Increasing maxlen {maxlen}")
+
             elif maxlen < MAX_RULE_LEN and maxlendecreased_due_timeout and support <= 1 - supp_step:
                 support += supp_step
                 maxlen += 1
                 lastrulecount = rule_count
-                
+
                 logging.debug(f"Increasing maxlen to {maxlen}")
                 logging.debug(f"Increasing minsup to {support}")
-                
+
                 maxlendecreased_due_timeout = False
-            
+
             elif conf > conf_step:
                 conf -= conf_step
                 logging.debug(f"Decreasing confidence to {conf}")
-                
+
             else:
                 logging.debug("All options exhausted")
                 flag = False
-        
+
     return rules
-
-
-

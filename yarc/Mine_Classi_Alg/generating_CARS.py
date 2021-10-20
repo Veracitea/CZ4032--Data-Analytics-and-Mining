@@ -11,7 +11,7 @@ def generateCARs(transactionDB, support=1, confidence=50, maxlen=10, **kwargs):
 
     Parameters
     ----------
-    transactionDB : TransactionDB
+    transactionDB : TransactionDB (convertion code can be found in Structures folder)
 
     support : float
         minimum support in percents if positive
@@ -43,7 +43,8 @@ def generateCARs(transactionDB, support=1, confidence=50, maxlen=10, **kwargs):
 
 def CARlist(rules):
     """Function for converting output from fim.apriori from the above function or topRules from below function to create a list of ClassAssociationRules
-
+    NOTE THAT PART 2 ONLY USES APRIORI
+    
     Parameters
     ----------
     rules : output from generateCARs
@@ -74,7 +75,7 @@ def CARlist(rules):
 
     return CARs
 
-
+#The top rules below is NOT used for part 2, but part 5 of the question as an improvement implemented within QCBA improvement; uses fim.arules
 def top_rules(transactions,
               appearance={},
               target_rule_count=1000,
